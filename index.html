@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Inventario Inteligente - Dashboard Financiero</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Barra de desplazamiento personalizada para la base de datos */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navegación del Encabezado -->
+    <header class="border-b border-slate-800 bg-slate-950/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                    <i class="fa-solid fa-brain text-emerald-400 text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-md font-bold tracking-tight text-white">Mi Inventario Inteligente</h1>
+                    <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" id="db-status-dot"></span>
+                        <span id="db-status-text">Conexión Segura Optimizada</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSettingsModal()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition duration-200">
+                    <i class="fa-solid fa-gears text-emerald-400"></i>
+                    Configurar Sheets
+                </button>
+                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition duration-200 shadow-lg shadow-emerald-600/10 hover:shadow-emerald-600/20">
+                    <i class="fa-regular fa-file-excel text-sm"></i>
+                    Exportar a Excel
+                </button>
+            </div>
+        </div>
+        <!-- Barra identificadora de usuario completa -->
+        <div class="bg-slate-900/40 border-t border-slate-800/80 px-4 py-1 text-center">
+            <p class="text-[10px] text-slate-400 font-medium">
+                Sesión Segura Activa. ID de Usuario Completo: 
+                <span id="full-user-id" class="font-mono text-emerald-400 font-bold select-all bg-slate-950/80 px-1.5 py-0.5 rounded border border-slate-800">Cargando identificador...</span>
+            </p>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Alerta de Integración con Google Sheets -->
+        <div id="sheets-alert-banner" class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hidden">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                    <i class="fa-solid fa-table text-emerald-400"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white">Sincronización con Hojas de Cálculo Activa</h4>
+                    <p class="text-[11px] text-slate-400">Cada gasto registrado se enviará de forma automática y organizada a tu Google Sheets en tiempo real.</p>
+                </div>
+            </div>
+            <button onclick="toggleSettingsModal()" class="text-xs text-emerald-400 hover:underline font-semibold">Editar enlace</button>
+        </div>
+
+        <!-- Cuadrícula de Tarjetas KPI -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Tarjeta 1: Presupuesto -->
+            <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Presupuesto Mensual</p>
+                <h3 class="text-2xl font-bold mt-2 text-white">$500.000</h3>
+                <p class="text-xs text-slate-500 mt-1">Límite establecido para julio</p>
+                <div class="absolute right-4 bottom-4 text-slate-800/20 text-4xl"><i class="fa-solid fa-piggy-bank"></i></div>
+            </div>
+            <!-- Tarjeta 2: Total Gastado -->
+            <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Gastado</p>
+                <h3 id="kpi-total" class="text-2xl font-bold mt-2 text-rose-400">$0</h3>
+                <p class="text-xs text-slate-500 mt-1">Sincronizado en la nube</p>
+                <div class="absolute right-4 bottom-4 text-rose-500/10 text-4xl"><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+            <!-- Tarjeta 3: Disponible -->
+            <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Presupuesto Disponible</p>
+                <h3 id="kpi-disponible" class="text-2xl font-bold mt-2 text-emerald-400">$500.000</h3>
+                <p class="text-xs text-slate-500 mt-1">Dinero libre para gastos</p>
+                <div class="absolute right-4 bottom-4 text-emerald-500/10 text-4xl"><i class="fa-solid fa-scale-balanced"></i></div>
+            </div>
+            <!-- Tarjeta 4: Gastos Hormiga -->
+            <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Impacto de Gastos Hormiga</p>
+                <h3 id="kpi-hormiga-count" class="text-2xl font-bold mt-2 text-amber-400">0</h3>
+                <p class="text-xs text-slate-500 mt-1" id="kpi-hormiga-text">Cargando...</p>
+                <div class="absolute right-4 bottom-4 text-amber-500/10 text-4xl"><i class="fa-solid fa-cookie"></i></div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: MAPA CEREBRAL NEURONAL Y GRÁFICOS -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Cerebro Financiero Interactivo (2 Columnas) -->
+            <div class="lg:col-span-2 bg-slate-900/30 border border-slate-800 p-6 rounded-3xl flex flex-col space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-circle-nodes text-emerald-400"></i>
+                            Cerebro Financiero: Mapa de Sinapsis de Gastos
+                        </h2>
+                        <p class="text-xs text-slate-400">Física en tiempo real. Arrastra los nodos de categorías. Las líneas gruesas y brillantes representan tus mayores gastos.</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full w-fit">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Sinapsis Activa</span>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Lienzo de Simulación -->
+                <div class="relative bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden h-[420px]">
+                    <canvas id="brain-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+                    
+                    <!-- Leyenda Interactiva -->
+                    <div class="absolute bottom-4 left-4 bg-slate-900/95 border border-slate-800 p-3 rounded-xl max-w-xs space-y-1.5 text-[10px] text-slate-400 backdrop-blur-sm shadow-xl">
+                        <p class="font-bold text-slate-300 flex items-center gap-1">💡 Tips de Navegación:</p>
+                        <p>• Arrastra cualquier nodo para jugar con su elasticidad.</p>
+                        <p>• El grosor de la línea mide la intensidad de consumo.</p>
+                        <p>• Los impulsos viajan más rápido en las categorías donde gastas más.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Distribución (1 Columna) -->
+            <div class="bg-slate-900/30 border border-slate-800 p-6 rounded-3xl flex flex-col space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i>
+                        Análisis de Distribución
+                    </h2>
+                    <p class="text-xs text-slate-400">Representación gráfica de tu balance actual</p>
+                </div>
+
+                <!-- Contenedor del Gráfico de Dona -->
+                <div class="flex-1 flex flex-col justify-center items-center h-[260px] relative">
+                    <canvas id="category-chart" class="max-h-[240px]"></canvas>
+                    <div id="chart-fallback" class="hidden text-center text-xs text-slate-500 py-12">
+                        No hay gastos suficientes para generar un gráfico.
+                    </div>
+                </div>
+
+                <!-- Barra de consumo de presupuesto -->
+                <div class="space-y-2 pt-4 border-t border-slate-800">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400 font-medium">Límite de Presupuesto Consumido:</span>
+                        <span id="budget-progress-percent" class="font-bold text-white">0%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                        <div id="budget-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 to-rose-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: ÁREA DE TRANSACCIONES (FORMULARIO Y TABLA) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <!-- Formulario de Registro (Cumple con Módulo 1) -->
+            <div class="bg-slate-900/30 border border-slate-800 p-6 rounded-3xl space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-emerald-500"></i>
+                        Registrar Compra
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Cumple con las directrices obligatorias del Módulo 1</p>
+                </div>
+
+                <form id="expense-form" class="space-y-4" onsubmit="handleFormSubmit(event)">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nombre del Producto *</label>
+                        <input type="text" id="form-producto" required placeholder="Ej. Cheetos, Café, Pasta de dientes..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Categoría *</label>
+                            <select id="form-categoria" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                <option value="Comidas">Comidas</option>
+                                <option value="Bebidas">Bebidas</option>
+                                <option value="Mercado">Mercado</option>
+                                <option value="Aseo">Aseo</option>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Maquillaje">Maquillaje</option>
+                                <option value="Ropa">Ropa</option>
+                                <option value="Medicamentos">Medicamentos</option>
+                                <option value="Papelería">Papelería</option>
+                                <option value="Hogar">Hogar</option>
+                                <option value="Mascotas">Mascotas</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Educación">Educación</option>
+                                <option value="Entretenimiento">Entretenimiento</option>
+                                <option value="Servicios">Servicios</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Unidad de Medida *</label>
+                            <select id="form-unidad" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                <option value="Paquete">Paquete</option>
+                                <option value="Unidad">Unidad</option>
+                                <option value="Caja">Caja</option>
+                                <option value="Kg">Kg</option>
+                                <option value="Litros">Litros</option>
+                                <option value="ml">ml</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Cantidad *</label>
+                            <input type="number" id="form-cantidad" required min="1" placeholder="Cant." oninput="updateTotalPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Precio Unitario ($) *</label>
+                            <input type="number" id="form-precio" required min="1" placeholder="Valor unitario" oninput="updateTotalPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/60 flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Precio Total (Cálculo Auto):</span>
+                        <span id="form-total-preview" class="text-sm font-bold text-emerald-400">$0</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Fecha de Compra *</label>
+                            <input type="date" id="form-fecha" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Método de Pago *</label>
+                            <select id="form-metodo" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                <option value="Nequi">Nequi</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Daviplata">Daviplata</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Establecimiento / Lugar *</label>
+                        <input type="text" id="form-lugar" required placeholder="Ej. Tienda de la esquina, Éxito..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Observaciones (Opcional)</label>
+                        <textarea id="form-observaciones" placeholder="Ej. Antojo de tarde, urgente..." rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-xs transition duration-200 shadow-lg shadow-emerald-600/10">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Registrar y Guardar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tabla de Base de Datos Sincronizada (Estilo Excel) -->
+            <div class="lg:col-span-2 bg-slate-900/30 border border-slate-800 p-6 rounded-3xl flex flex-col h-[740px]">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-regular fa-file-lines text-emerald-400"></i>
+                            Base de Datos Sincronizada (Vista de Excel)
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Sincronización instantánea de transacciones</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-medium text-slate-300 text-[10px] uppercase tracking-wider">Flujo en Tiempo Real</span>
+                    </div>
+                </div>
+
+                <!-- Contenedor de la Tabla -->
+                <div class="flex-1 overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-950 border-b border-slate-800 sticky top-0 text-slate-300 z-10">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Fecha</th>
+                                <th class="p-4 font-semibold">Producto</th>
+                                <th class="p-4 font-semibold">Categoría</th>
+                                <th class="p-4 font-semibold">Cant.</th>
+                                <th class="p-4 font-semibold">Unidad</th>
+                                <th class="p-4 font-semibold">P. Unitario</th>
+                                <th class="p-4 font-semibold">P. Total</th>
+                                <th class="p-4 font-semibold">Establecimiento</th>
+                                <th class="p-4 font-semibold">Pago</th>
+                                <th class="p-4 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-800/50 text-slate-300">
+                            <!-- Se carga dinámicamente -->
+                            <tr>
+                                <td colspan="11" class="p-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-lg mr-2"></i>
+                                    Iniciando conexión segura...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                    <span>* Presiona la papelera para eliminar un registro en tiempo real.</span>
+                    <span>Filas Totales en Memoria: <strong id="table-count" class="text-white">0</strong></span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Configuración de Google Sheets -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100] hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table text-emerald-400"></i>
+                    Vincular con Google Sheets (Enlace Automático)
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Al habilitar este enlace, cada vez que registres un producto (con unidades como <span class="text-emerald-400">paquete</span>, <span class="text-emerald-400">unidad</span> o <span class="text-emerald-400">caja</span>), la aplicación enviará de inmediato la fila organizada directamente a tu hoja de cálculo real en Google Drive.
+                </p>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">URL del Webhook de Google Apps Script</label>
+                    <input type="url" id="sheet-webhook-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                    <p class="text-[9px] text-slate-500 mt-1">Pega aquí el enlace que copiaste de tu Apps Script de Google.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button onclick="toggleSettingsModal()" class="px-4 py-2.5 bg-slate-950 hover:bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-semibold text-slate-400 transition">Cancelar</button>
+                <button onclick="saveSheetsConfig()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-semibold text-white transition shadow-lg shadow-emerald-600/10">Vincular y Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="border-t border-slate-800 bg-slate-950/80 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            &copy; 2026 Mi Inventario Inteligente. Conectividad y almacenamiento automatizado en la nube con Google Sheets.
+        </div>
+    </footer>
+
+    <!-- Ventana Emergente de Alerta Personalizada -->
+    <div id="custom-alert" class="fixed bottom-6 right-6 bg-slate-900 border-2 border-emerald-500 p-4 rounded-xl shadow-2xl z-50 transform translate-y-24 opacity-0 transition-all duration-300 max-w-sm flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
+            <i id="alert-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        </div>
+        <div class="flex-1">
+            <h4 id="alert-title" class="text-xs font-bold text-white">Éxito</h4>
+            <p id="alert-message" class="text-[11px] text-slate-400 mt-1">Gasto guardado con éxito.</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports and Core App Logic (Type=Module) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de credenciales de Firebase en el entorno
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'inventario-inteligente-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "",
+            authDomain: "dummy.firebaseapp.com",
+            projectId: "dummy",
+            storageBucket: "dummy.appspot.com",
+            messagingSenderId: "123",
+            appId: "123"
+        };
+
+        // Inicializar servicios Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Optimización de caché de persistencia para que cargue en 0 ms
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager()
+            })
+        });
+
+        // Estados globales de la aplicación
+        let transactions = [];
+        let user = null;
+        let unsubscribeSnapshot = null;
+        let chartInstance = null;
+        let isLocalMode = false;
+
+        // Variables de simulación del Lienzo Físico del Cerebro
+        let canvas = null;
+        let ctx = null;
+        let nodes = [];
+        let dragNode = null;
+        const mouse = { x: 0, y: 0 };
+        const offset = { x: 0, y: 0 };
+        let animationFrameId = null;
+
+        // Categorías permitidas bajo el Módulo 1
+        const allCategories = [
+            "Mercado", "Aseo", "Tecnología", "Maquillaje", "Ropa", 
+            "Medicamentos", "Papelería", "Hogar", "Mascotas", "Transporte", 
+            "Educación", "Entretenimiento", "Comidas", "Bebidas", "Servicios", "Otros"
+        ];
+
+        // Datos iniciales de semilla (Se usarán para rellenar si no hay internet o datos en nube)
+        const defaultData = [
+            {
+                id: 1,
+                fecha: "2026-07-08",
+                producto: "Chistris",
+                categoria: "Comidas",
+                cantidad: 2,
+                unidad: "Paquete",
+                precio: 2000,
+                total: 4000,
+                lugar: "Tienda de la esquina",
+                metodo: "Nequi",
+                observaciones: "Gasto hormiga inicial"
+            },
+            {
+                id: 2,
+                fecha: "2026-07-08",
+                producto: "Cheetos",
+                categoria: "Comidas",
+                cantidad: 2,
+                unidad: "Paquete",
+                precio: 2000,
+                total: 4000,
+                lugar: "Tienda de la esquina",
+                metodo: "Nequi",
+                observaciones: "Ninguna"
+            },
+            {
+                id: 3,
+                fecha: "2026-07-08",
+                producto: "Chocolate",
+                categoria: "Bebidas",
+                cantidad: 1,
+                unidad: "Paquete",
+                precio: 1800,
+                total: 1800,
+                lugar: "SENA",
+                metodo: "Nequi",
+                observaciones: "Ninguna"
+            }
+        ];
+
+        // -------------------------------------------------------------
+        // AUTENTICACIÓN ELEVADA (HOISTED FUNCTION) - Soluciona el error de inicialización
+        // -------------------------------------------------------------
+        async function initAuthAndSchedules() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Autenticación fallida, usando modo local:", err);
+                try {
+                    await signInAnonymously(auth);
+                } catch (retryErr) {
+                    isLocalMode = true;
+                    loadLocalMode();
+                }
+            }
+        }
+
+        // Detección inteligente de credenciales vacías para activar Modo Local instantáneo
+        const isDummyConfig = !firebaseConfig.apiKey || firebaseConfig.apiKey === "" || firebaseConfig.projectId === "dummy";
+
+        if (isDummyConfig) {
+            isLocalMode = true;
+            setTimeout(() => {
+                loadLocalMode();
+            }, 50);
+        } else {
+            setupCloudMode();
+        }
+
+        function loadLocalMode() {
+            const statusDot = document.getElementById('db-status-dot');
+            const statusText = document.getElementById('db-status-text');
+            const userIdText = document.getElementById('full-user-id');
+
+            statusDot.className = "w-2 h-2 rounded-full bg-blue-500 animate-pulse";
+            statusText.innerText = "Base de datos en caché instantánea";
+            userIdText.innerText = "LOCAL_USER_OFFLINE";
+
+            const localStore = localStorage.getItem('transactions_inteligente');
+            if (localStore) {
+                transactions = JSON.parse(localStore);
+            } else {
+                transactions = [...defaultData];
+                localStorage.setItem('transactions_inteligente', JSON.stringify(transactions));
+            }
+
+            renderTable();
+            updateMetrics();
+            syncBrainData();
+            checkSheetsBannerStatus();
+        }
+
+        function setupCloudMode() {
+            onAuthStateChanged(auth, (currentUser) => {
+                user = currentUser;
+                const statusDot = document.getElementById('db-status-dot');
+                const statusText = document.getElementById('db-status-text');
+                const userIdText = document.getElementById('full-user-id');
+
+                if (user) {
+                    statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                    statusText.innerText = "Nube y caché sincronizados al instante";
+                    userIdText.innerText = user.uid;
+                    listenToTransactions(user.uid);
+                } else {
+                    statusDot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+                    statusText.innerText = "Iniciando sesión segura...";
+                    userIdText.innerText = "No autenticado";
+                }
+            });
+
+            initAuthAndSchedules();
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => {
+                initializeAppUI();
+            });
+        } else {
+            initializeAppUI();
+        }
+
+        function initializeAppUI() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('form-fecha').value = today;
+            
+            // Cargar webhook de Google Sheets si existe en almacenamiento
+            const savedWebhook = localStorage.getItem('google_sheets_webhook');
+            if (savedWebhook) {
+                document.getElementById('sheet-webhook-url').value = savedWebhook;
+            }
+            checkSheetsBannerStatus();
+            
+            initBrainSimulation();
+        }
+
+        // -------------------------------------------------------------
+        // SUSCRIPCIÓN EN TIEMPO REAL A FIRESTORE
+        // -------------------------------------------------------------
+        function listenToTransactions(userId) {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+            const transactionsCol = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+            
+            unsubscribeSnapshot = onSnapshot(transactionsCol, (snapshot) => {
+                const items = [];
+                snapshot.forEach(doc => {
+                    items.push({ docId: doc.id, ...doc.data() });
+                });
+
+                items.sort((a, b) => a.id - b.id);
+                transactions = items;
+
+                if (transactions.length === 0) {
+                    seedDefaultData(transactionsCol);
+                    return;
+                }
+
+                renderTable();
+                updateMetrics();
+                syncBrainData();
+            }, (error) => {
+                console.error("Error al escuchar Firestore, activando local:", error);
+                isLocalMode = true;
+                loadLocalMode();
+            });
+        }
+
+        async function seedDefaultData(collectionRef) {
+            try {
+                for (const item of defaultData) {
+                    await addDoc(collectionRef, item);
+                }
+            } catch (err) {
+                console.error("Error al insertar semilla inicial:", err);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ENVÍO DE DATOS EN TIEMPO REAL A GOOGLE SHEETS
+        // -------------------------------------------------------------
+        function dispatchToGoogleSheets(transactionData) {
+            const webhookUrl = localStorage.getItem('google_sheets_webhook');
+            if (!webhookUrl || webhookUrl.trim() === "") return;
+
+            // Formatear la fecha a DD/MM/AAAA para Excel
+            const dateParts = transactionData.fecha.split('-');
+            const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : transactionData.fecha;
+
+            const payload = {
+                id: transactionData.id,
+                fecha: formattedDate,
+                producto: transactionData.producto,
+                categoria: transactionData.categoria,
+                cantidad: transactionData.cantidad,
+                unidad: transactionData.unidad,
+                precio: transactionData.precio,
+                total: transactionData.total,
+                lugar: transactionData.lugar,
+                metodo: transactionData.metodo,
+                observaciones: transactionData.observaciones
+            };
+
+            fetch(webhookUrl, {
+                method: "POST",
+                mode: "no-cors", 
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                console.log("¡Sincronizado automáticamente con Google Sheets!");
+            })
+            .catch(err => {
+                console.error("Error al enviar a Google Sheets:", err);
+                showAlert("Error Sheets", "No se pudo sincronizar automáticamente con Google Sheets.", true);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // CONTROL Y GESTIÓN DE TRANSACCIONES DEL USUARIO
+        // -------------------------------------------------------------
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const prodName = document.getElementById('form-producto').value;
+            const category = document.getElementById('form-categoria').value;
+            const unit = document.getElementById('form-unidad').value;
+            const qty = parseInt(document.getElementById('form-cantidad').value);
+            const unitPrice = parseFloat(document.getElementById('form-precio').value);
+            const date = document.getElementById('form-fecha').value;
+            const payment = document.getElementById('form-metodo').value;
+            const place = document.getElementById('form-lugar').value;
+            const obs = document.getElementById('form-observaciones').value || "Ninguna";
+
+            // Validaciones obligatorias de lógica del Módulo 1
+            if (qty <= 0) {
+                showAlert("Error de validación", "La cantidad debe ser mayor a cero.", true);
+                return;
+            }
+            if (unitPrice <= 0) {
+                showAlert("Error de validación", "El precio unitario debe ser mayor a cero.", true);
+                return;
+            }
+
+            const calculatedTotal = qty * unitPrice;
+            const nextNumericId = transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1;
+
+            const newTx = {
+                id: nextNumericId,
+                fecha: date,
+                producto: prodName,
+                categoria: category,
+                cantidad: qty,
+                unidad: unit,
+                precio: unitPrice,
+                total: calculatedTotal,
+                lugar: place,
+                metodo: payment,
+                observaciones: obs
+            };
+
+            // Enviar inmediatamente al webhook de Google Sheets si está enlazado
+            dispatchToGoogleSheets(newTx);
+
+            // Operaciones en Modo Local Autónomo
+            if (isLocalMode) {
+                newTx.docId = 'local_' + Date.now();
+                transactions.push(newTx);
+                localStorage.setItem('transactions_inteligente', JSON.stringify(transactions));
+                
+                renderTable();
+                updateMetrics();
+                syncBrainData();
+
+                document.getElementById('expense-form').reset();
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('form-fecha').value = today;
+                document.getElementById('form-total-preview').innerText = "$0";
+
+                showAlert("Sincronización Exitosa", `Se guardó "${prodName}" localmente y en Google Sheets.`);
+                return;
+            }
+
+            // Operaciones en la Nube (Firestore)
+            if (!user) {
+                showAlert("Sesión inactiva", "No estás conectado a la base de datos.", true);
+                return;
+            }
+
+            try {
+                const transactionsCol = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
+                await addDoc(transactionsCol, newTx);
+                
+                document.getElementById('expense-form').reset();
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('form-fecha').value = today;
+                document.getElementById('form-total-preview').innerText = "$0";
+
+                showAlert("Sincronización Exitosa", `Se guardó "${prodName}" en la base de datos de la nube.`);
+            } catch (err) {
+                console.error("Error al escribir en la nube:", err);
+                showAlert("Error de Nube", "No se pudo sincronizar el nuevo gasto.", true);
+            }
+        }
+
+        async function deleteRow(docId) {
+            if (isLocalMode) {
+                transactions = transactions.filter(t => t.docId !== docId);
+                localStorage.setItem('transactions_inteligente', JSON.stringify(transactions));
+                
+                renderTable();
+                updateMetrics();
+                syncBrainData();
+                showAlert("Registro eliminado", "La transacción fue removida al instante.");
+                return;
+            }
+
+            if (!user) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', docId);
+                await deleteDoc(docRef);
+                showAlert("Registro eliminado", "La transacción fue removida en tiempo real de la nube.");
+            } catch (err) {
+                console.error("Error al borrar de la nube:", err);
+                showAlert("Error al borrar", "No se pudo actualizar la nube.", true);
+            }
+        }
+
+        function updateTotalPreview() {
+            const qty = parseFloat(document.getElementById('form-cantidad').value) || 0;
+            const price = parseFloat(document.getElementById('form-precio').value) || 0;
+            const total = qty * price;
+            document.getElementById('form-total-preview').innerText = `$${total.toLocaleString()}`;
+        }
+
+        // -------------------------------------------------------------
+        // RENDERIZADO VISUAL DE TABLAS Y MÉTRICAS
+        // -------------------------------------------------------------
+        function renderTable() {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+
+            if (transactions.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="p-8 text-center text-slate-500">
+                            No tienes gastos registrados. ¡Agrega uno a la izquierda para empezar!
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('table-count').innerText = "0";
+                return;
+            }
+
+            transactions.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition duration-150";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-slate-500">#${String(item.id).padStart(3, '0')}</td>
+                    <td class="p-4 whitespace-nowrap">${formatDate(item.fecha)}</td>
+                    <td class="p-4 font-semibold text-white">${item.producto}</td>
+                    <td class="p-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-900 text-slate-300 border border-slate-800">${item.categoria}</span></td>
+                    <td class="p-4">${item.cantidad}</td>
+                    <td class="p-4 text-slate-500">${item.unidad}</td>
+                    <td class="p-4">$${item.precio.toLocaleString()}</td>
+                    <td class="p-4 font-bold text-white">$${item.total.toLocaleString()}</td>
+                    <td class="p-4 truncate max-w-[120px]" title="${item.lugar}">${item.lugar}</td>
+                    <td class="p-4">${item.metodo}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteRow('${item.docId}')" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 p-2 rounded-xl transition duration-150">
+                            <i class="fa-regular fa-trash-can text-sm"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('table-count').innerText = transactions.length;
+        }
+
+        function updateMetrics() {
+            const totalBudget = 500000;
+            const totalSpent = transactions.reduce((acc, curr) => acc + curr.total, 0);
+            const availableBudget = totalBudget - totalSpent;
+
+            // Identificar Gastos Hormiga basados en categorías de consumo recurrente y bajo costo
+            const hormigas = transactions.filter(item => 
+                (item.categoria === 'Comidas' || item.categoria === 'Bebidas' || item.categoria === 'Otros' || item.categoria === 'Entretenimiento') && 
+                (item.precio <= 15000)
+            );
+            const totalHormigaSpent = hormigas.reduce((acc, curr) => acc + curr.total, 0);
+
+            document.getElementById('kpi-total').innerText = `$${totalSpent.toLocaleString()}`;
+            document.getElementById('kpi-disponible').innerText = `$${availableBudget.toLocaleString()}`;
+            document.getElementById('kpi-hormiga-count').innerText = hormigas.length;
+            document.getElementById('kpi-hormiga-text').innerText = `Suma: $${totalHormigaSpent.toLocaleString()}`;
+
+            const availableKpi = document.getElementById('kpi-disponible');
+            if (availableBudget < 100000) {
+                availableKpi.className = "text-2xl font-bold mt-2 text-rose-500";
+            } else if (availableBudget < 250000) {
+                availableKpi.className = "text-2xl font-bold mt-2 text-amber-500";
+            } else {
+                availableKpi.className = "text-2xl font-bold mt-2 text-emerald-400";
+            }
+
+            const percentUsed = Math.min((totalSpent / totalBudget) * 100, 100);
+            document.getElementById('budget-progress-percent').innerText = `${percentUsed.toFixed(1)}%`;
+            document.getElementById('budget-progress-bar').style.width = `${percentUsed}%`;
+
+            renderCategoryChart();
+        }
+
+        function renderCategoryChart() {
+            const categorySums = {};
+            transactions.forEach(t => {
+                categorySums[t.categoria] = (categorySums[t.categoria] || 0) + t.total;
+            });
+
+            const labels = Object.keys(categorySums);
+            const data = Object.values(categorySums);
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const canvasChart = document.getElementById('category-chart');
+            const fallbackMsg = document.getElementById('chart-fallback');
+
+            if (labels.length === 0) {
+                canvasChart.classList.add('hidden');
+                fallbackMsg.classList.remove('hidden');
+                return;
+            } else {
+                canvasChart.classList.remove('hidden');
+                fallbackMsg.classList.add('hidden');
+            }
+
+            const ctxChart = canvasChart.getContext('2d');
+            
+            const themeColors = [
+                '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#3b82f6', 
+                '#06b6d4', '#ec4899', '#a855f7', '#14b8a6', '#6366f1',
+                '#eab308', '#f97316', '#22c55e', '#06b6d4', '#475569', '#334155'
+            ];
+
+            chartInstance = new Chart(ctxChart, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: themeColors.slice(0, labels.length),
+                        borderColor: '#020617',
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: {
+                                    family: 'Plus Jakarta Sans',
+                                    size: 10,
+                                    weight: 500
+                                },
+                                boxWidth: 10,
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw || 0;
+                                    return ` $${value.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function showAlert(title, message, isError = false) {
+            const alertBox = document.getElementById('custom-alert');
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            const alertIcon = document.getElementById('alert-icon');
+
+            alertTitle.innerText = title;
+            alertMessage.innerText = message;
+
+            if (isError) {
+                alertBox.className = "fixed bottom-6 right-6 bg-slate-900 border-2 border-rose-500 p-4 rounded-xl shadow-2xl z-50 transform transition-all duration-300 flex items-start gap-3 opacity-100 translate-y-0";
+                alertIcon.className = "fa-solid fa-circle-exclamation text-rose-400 text-sm";
+            } else {
+                alertBox.className = "fixed bottom-6 right-6 bg-slate-900 border-2 border-emerald-500 p-4 rounded-xl shadow-2xl z-50 transform transition-all duration-300 flex items-start gap-3 opacity-100 translate-y-0";
+                alertIcon.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
+            }
+
+            setTimeout(() => {
+                alertBox.className = "fixed bottom-6 right-6 bg-slate-900 border-2 p-4 rounded-xl shadow-2xl z-50 transform transition-all duration-300 flex items-start gap-3 opacity-0 translate-y-24";
+            }, 3500);
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function saveSheetsConfig() {
+            const url = document.getElementById('sheet-webhook-url').value;
+            if (url && url.trim() !== "" && !url.startsWith('https://script.google.com/')) {
+                showAlert("URL Inválida", "La URL debe comenzar con https://script.google.com/", true);
+                return;
+            }
+
+            localStorage.setItem('google_sheets_webhook', url);
+            toggleSettingsModal();
+            checkSheetsBannerStatus();
+            
+            if (url && url.trim() !== "") {
+                showAlert("¡Sheets Vinculado!", "Tu Hoja de Cálculo se ha configurado para actualizaciones directas.");
+            } else {
+                showAlert("Enlace Removido", "Se ha desvinculado la hoja de cálculo.");
+            }
+        }
+
+        function checkSheetsBannerStatus() {
+            const banner = document.getElementById('sheets-alert-banner');
+            const url = localStorage.getItem('google_sheets_webhook');
+            if (url && url.trim() !== "") {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // EXPORTACIÓN EXCEL COMPATIBLE CON ALINEACIÓN POR SEMICOLON (sep=;)
+        // -------------------------------------------------------------
+        function exportToExcel() {
+            if (transactions.length === 0) {
+                showAlert("Sin datos", "No tienes registros para exportar en este momento.", true);
+                return;
+            }
+
+            let excelContent = "\uFEFF"; 
+            excelContent += "sep=;\r\n"; 
+
+            excelContent += "ID;Fecha;Producto;Categoría;Cantidad;Unidad;Precio Unitario ($);Precio Total ($);Lugar;Método de Pago;Observaciones\r\n";
+
+            transactions.forEach(item => {
+                const row = [
+                    `#${String(item.id).padStart(3, '0')}`,
+                    formatDate(item.fecha),
+                    item.producto.replace(/;/g, ","),
+                    item.categoria,
+                    item.cantidad,
+                    item.unidad,
+                    item.precio,
+                    item.total,
+                    item.lugar.replace(/;/g, ","),
+                    item.metodo,
+                    (item.observaciones || "Ninguna").replace(/;/g, ",")
+                ].join(";");
+                excelContent += row + "\r\n";
+            });
+
+            const totalSpent = transactions.reduce((acc, curr) => acc + curr.total, 0);
+            excelContent += `\r\n;;;;;;TOTAL ACUMULADO:;${totalSpent};;;\r\n`;
+
+            const blob = new Blob([excelContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            const downloadUrl = URL.createObjectURL(blob);
+            link.href = downloadUrl;
+            link.setAttribute("download", `Mi_Inventario_Gastos_${todayStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                URL.revokeObjectURL(downloadUrl);
+            }, 150);
+
+            showAlert("Excel Exportado", "Se descargó tu reporte de compras organizado de forma exitosa.");
+        }
+
+
+        // -------------------------------------------------------------
+        // MOTOR FÍSICO INTERACTIVO DEL LIENZO DEL CEREBRO
+        // -------------------------------------------------------------
+        function initBrainSimulation() {
+            canvas = document.getElementById('brain-canvas');
+            ctx = canvas.getContext('2d');
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+
+            canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd);
+
+            buildNodes();
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animate();
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const rect = canvas.parentNode.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            
+            if (nodes && nodes.length > 0) {
+                const centerNode = nodes.find(n => n.isCenter);
+                if (centerNode) {
+                    centerNode.x = canvas.width / 2;
+                    centerNode.y = canvas.height / 2;
+                }
+            }
+        }
+
+        function buildNodes() {
+            nodes = [];
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            nodes.push({
+                id: 'brain-core',
+                label: 'Cerebro Central',
+                x: width / 2,
+                y: height / 2,
+                vx: 0,
+                vy: 0,
+                radius: 36,
+                isCenter: true,
+                spent: 0,
+                color: '#10b981'
+            });
+
+            const radiusOffset = 150;
+            allCategories.forEach((cat, index) => {
+                const angle = (index / allCategories.length) * Math.PI * 2;
+                
+                nodes.push({
+                    id: `cat-${cat}`,
+                    label: cat,
+                    x: (width / 2) + Math.cos(angle) * radiusOffset,
+                    y: (height / 2) + Math.sin(angle) * radiusOffset,
+                    vx: 0,
+                    vy: 0,
+                    radius: 20,
+                    isCenter: false,
+                    spent: 0,
+                    color: '#475569',
+                    pulseProgress: Math.random()
+                });
+            });
+
+            syncBrainData();
+        }
+
+        function syncBrainData() {
+            if (nodes.length === 0) return;
+
+            const categorySums = {};
+            let maxSpent = 1;
+            transactions.forEach(t => {
+                categorySums[t.categoria] = (categorySums[t.categoria] || 0) + t.total;
+                if (categorySums[t.categoria] > maxSpent) {
+                    maxSpent = categorySums[t.categoria];
+                }
+            });
+
+            const totalSpent = transactions.reduce((acc, curr) => acc + curr.total, 0);
+
+            nodes.forEach(node => {
+                if (node.isCenter) {
+                    node.spent = totalSpent;
+                    return;
+                }
+
+                const spent = categorySums[node.label] || 0;
+                node.spent = spent;
+
+                if (spent > 0) {
+                    const percentage = spent / maxSpent;
+                    node.radius = 20 + (percentage * 14);
+                    
+                    if (spent > 150000) {
+                        node.color = '#f43f5e'; 
+                    } else if (spent > 50000) {
+                        node.color = '#f59e0b'; 
+                    } else {
+                        node.color = '#10b981'; 
+                    }
+                } else {
+                    node.radius = 16;
+                    node.color = '#1e293b'; 
+                }
+            });
+        }
+
+        function drawBrainCore(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(size / 80, size / 80);
+            
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = "#10b981";
+            
+            ctx.beginPath();
+            ctx.arc(-10, -10, 18, Math.PI, Math.PI * 1.5);
+            ctx.arc(4, -22, 12, Math.PI * 1.5, 0);
+            ctx.arc(12, -10, 12, Math.PI * 1.7, Math.PI * 0.5);
+            ctx.arc(0, 12, 18, Math.PI * 0.2, Math.PI);
+            ctx.arc(-18, 4, 12, Math.PI * 0.8, Math.PI * 1.5);
+            ctx.closePath();
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(10, -10, 18, Math.PI * 1.5, 0);
+            ctx.arc(-4, -22, 12, Math.PI, Math.PI * 1.5);
+            ctx.arc(-12, -10, 12, Math.PI * 0.5, Math.PI * 1.3);
+            ctx.arc(0, 12, 18, Math.PI, Math.PI * 1.8);
+            ctx.arc(18, 4, 12, Math.PI * 1.5, Math.PI * 0.2);
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.fillStyle = "rgba(16, 185, 129, 0.8)";
+            ctx.beginPath();
+            ctx.arc(0, -4, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        function animate() {
+            if (!canvas || !ctx) return;
+
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerNode = nodes.find(n => n.isCenter);
+            const center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+            if (centerNode && dragNode !== centerNode) {
+                centerNode.x += (center.x - centerNode.x) * 0.15;
+                centerNode.y += (center.y - centerNode.y) * 0.15;
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                const n1 = nodes[i];
+                if (n1 === dragNode) continue;
+
+                if (!n1.isCenter && centerNode) {
+                    const dx = centerNode.x - n1.x;
+                    const dy = centerNode.y - n1.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    
+                    const targetDistance = 150 + (n1.spent > 0 ? 10 : 0);
+                    const kSpring = 0.015;
+                    const force = (dist - targetDistance) * kSpring;
+
+                    n1.vx += (dx / dist) * force;
+                    n1.vy += (dy / dist) * force;
+                }
+
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const n2 = nodes[j];
+                    const dx = n2.x - n1.x;
+                    const dy = n2.y - n1.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const minDist = n1.radius + n2.radius + 30;
+
+                    if (dist < minDist) {
+                        const pushForce = (minDist - dist) * 0.08;
+                        const fx = (dx / dist) * pushForce;
+                        const fy = (dy / dist) * pushForce;
+
+                        if (!n1.isCenter) { n1.vx -= fx; n1.vy -= fy; }
+                        if (!n2.isCenter) { n2.vx += fx; n2.vy += fy; }
+                    }
+                }
+
+                n1.vx *= 0.82;
+                n1.vy *= 0.82;
+                n1.x += n1.vx;
+                n1.y += n1.vy;
+
+                n1.x = Math.max(n1.radius + 10, Math.min(canvas.width - n1.radius - 10, n1.x));
+                n1.y = Math.max(n1.radius + 10, Math.min(canvas.height - n1.radius - 10, n1.y));
+            }
+
+            if (centerNode) {
+                nodes.forEach(node => {
+                    if (node.isCenter) return;
+
+                    const hasSpent = node.spent > 0;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(centerNode.x, centerNode.y);
+                    
+                    if (hasSpent) {
+                        ctx.lineWidth = Math.min(2 + (node.spent * 0.0001), 7);
+                        ctx.strokeStyle = node.color + "50";
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = node.color;
+                    } else {
+                        ctx.lineWidth = 1;
+                        ctx.strokeStyle = "rgba(71, 85, 105, 0.15)";
+                        ctx.shadowBlur = 0;
+                    }
+                    ctx.stroke();
+
+                    if (hasSpent) {
+                        const speed = 0.005 + Math.min(node.spent * 0.0000005, 0.02);
+                        node.pulseProgress += speed;
+                        if (node.pulseProgress > 1) node.pulseProgress = 0;
+
+                        const px = node.x + (centerNode.x - node.x) * node.pulseProgress;
+                        const py = node.y + (centerNode.y - node.y) * node.pulseProgress;
+
+                        ctx.beginPath();
+                        ctx.arc(px, py, 4 + Math.min(node.spent * 0.00001, 4), 0, Math.PI * 2);
+                        ctx.fillStyle = node.color;
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = node.color;
+                        ctx.fill();
+                    }
+                });
+            }
+
+            ctx.shadowBlur = 0;
+
+            nodes.forEach(node => {
+                if (node.isCenter) {
+                    const pulseScale = 1 + Math.sin(Date.now() * 0.003) * 0.05;
+                    drawBrainCore(node.x, node.y, node.radius * pulseScale);
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 11px Plus Jakarta Sans';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('PRESUPUESTO', node.x, node.y + 36);
+                    return;
+                }
+
+                const isActive = node.spent > 0;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                ctx.fillStyle = node.color;
+                if (isActive) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = node.color;
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius - (isActive ? 3 : 2), 0, Math.PI * 2);
+                ctx.fillStyle = '#020617';
+                ctx.fill();
+
+                ctx.fillStyle = isActive ? '#ffffff' : '#475569';
+                ctx.font = `500 ${node.radius * 0.4}px Plus Jakarta Sans`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const acronym = node.label.substring(0, 3).toUpperCase();
+                ctx.fillText(acronym, node.x, node.y);
+
+                if (isActive) {
+                    ctx.font = '500 9px Plus Jakarta Sans';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(node.label, node.x, node.y - node.radius - 12);
+                    
+                    ctx.font = 'bold 10px Plus Jakarta Sans';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`$${node.spent.toLocaleString()}`, node.x, node.y - node.radius - 2);
+                }
+            });
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function onMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+            checkDragSelection();
+        }
+
+        function onMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+
+            if (dragNode) {
+                dragNode.x = mouse.x + offset.x;
+                dragNode.y = mouse.y + offset.y;
+            }
+        }
+
+        function onMouseUp() {
+            dragNode = null;
+        }
+
+        function onTouchStart(e) {
+            if (e.touches.length === 0) return;
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.touches[0].clientX - rect.left;
+            mouse.y = e.touches[0].clientY - rect.top;
+
+            if (checkDragSelection()) {
+                e.preventDefault();
+            }
+        }
+
+        function onTouchMove(e) {
+            if (e.touches.length === 0 || !dragNode) return;
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.touches[0].clientX - rect.left;
+            mouse.y = e.touches[0].clientY - rect.top;
+
+            dragNode.x = mouse.x + offset.x;
+            dragNode.y = mouse.y + offset.y;
+            e.preventDefault();
+        }
+
+        function onTouchEnd() {
+            dragNode = null;
+        }
+
+        function checkDragSelection() {
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                const dx = node.x - mouse.x;
+                const dy = node.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < node.radius) {
+                    dragNode = node;
+                    offset.x = node.x - mouse.x;
+                    offset.y = node.y - mouse.y;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Vincular funciones globales para resolver el ámbito de módulos (type=module)
+        window.deleteRow = deleteRow;
+        window.handleFormSubmit = handleFormSubmit;
+        window.updateTotalPreview = updateTotalPreview;
+        window.exportToExcel = exportToExcel;
+        window.toggleSettingsModal = toggleSettingsModal;
+        window.saveSheetsConfig = saveSheetsConfig;
+
+    </script>
+</body>
+</html>
