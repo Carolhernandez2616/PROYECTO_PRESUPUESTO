@@ -1,0 +1,294 @@
+    
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;850&display=swap');
+        
+        :root {
+            --bg-color: #020617;
+            --card-bg: rgba(15, 23, 42, 0.4);
+            --border-color: rgba(51, 65, 85, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+            --glow-color: rgba(16, 185, 129, 0.15);
+            --vibrant-red: #ff0000; /* Pure vibrant red from the ring chart (image_7834c4.png) */
+        }
+
+        .light-mode {
+            --bg-color: #cbd5e1; /* Medium grey slate background for card physical elevation */
+            --card-bg: #ffffff; /* Solid pure white cards */
+            --border-color: #334155; /* Bold visible borders (slate-700) */
+            --text-main: #000000; /* Pure black text for ultimate readability */
+            --text-muted: #1e293b; /* Highly readable dark grey text */
+            --accent: #059669;
+            --glow-color: rgba(5, 150, 105, 0.08);
+            --vibrant-red: #ff0000; /* Maintains pure brilliant red */
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .premium-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px -10px var(--glow-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px -5px var(--glow-color);
+            border-color: var(--accent);
+        }
+
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 30%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        .btn-shimmer:hover::after {
+            left: 130%;
+        }
+
+        /* Gentle float animation for background logo/coin */
+        @keyframes subtle-float {
+            0%, 100% { transform: translateY(0) scale(1.02); }
+            50% { transform: translateY(-8px) scale(1.05); }
+        }
+        .animate-coin {
+            animation: subtle-float 6s ease-in-out infinite;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 8px;
+        }
+
+        /* Pulsing warning for over budget */
+        @keyframes pulse-red-neon {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.3), inset 0 0 5px rgba(255, 0, 0, 0.1); }
+            50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.6), inset 0 0 10px rgba(255, 0, 0, 0.2); }
+        }
+        .over-budget-flash {
+            animation: pulse-red-neon 2s infinite;
+            border-color: var(--vibrant-red) !important;
+        }
+
+        /* ======================================================= */
+        /* HIGH-CONTRAST LIGHT MODE REFINEMENTS (MAX REACTION)     */
+        /* ======================================================= */
+        .light-mode header {
+            background-color: #ffffff !important;
+            border-bottom: 2px solid #334155 !important;
+        }
+
+        /* Force pure pitch black text on ALL light-mode elements for maximum legibility */
+        .light-mode p,
+        .light-mode span,
+        .light-mode h1,
+        .light-mode h2,
+        .light-mode h3,
+        .light-mode h4,
+        .light-mode td,
+        .light-mode th,
+        .light-mode label,
+        .light-mode li,
+        .light-mode select,
+        .light-mode option {
+            color: #000000 !important;
+            font-weight: 600 !important; /* Make fonts slightly heavier to pop out */
+        }
+
+        .light-mode .text-slate-300,
+        .light-mode .text-slate-400,
+        .light-mode .text-slate-500,
+        .light-mode .text-slate-200 {
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }
+
+        /* Exception for color metrics that must retain their red/teal colors */
+        .light-mode .text-cyan-400, .light-mode #kpi-total-ingresos {
+            color: #0e7490 !important; /* Dark teal for bright text safety */
+        }
+        .light-mode .text-rose-400, .light-mode #kpi-total-gastos {
+            color: #ff0000 !important; /* Forces solid vibrant red */
+        }
+        .light-mode .text-emerald-400, .light-mode #kpi-balance-real {
+            color: #059669 !important; /* Bold green */
+        }
+
+        /* Extra thick ultra-defined borders for light mode cards */
+        .light-mode .premium-card {
+            border: 2px solid #334155 !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2) !important;
+        }
+        .light-mode .premium-card:hover {
+            border-color: var(--accent) !important;
+            box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.25) !important;
+        }
+
+        /* Background blocks adjustment */
+        .light-mode .bg-slate-950,
+        .light-mode .bg-slate-950\/80,
+        .light-mode .bg-slate-950\/40,
+        .light-mode .bg-slate-950\/60 {
+            background-color: #f1f5f9 !important; /* Soft grey slate-100 */
+            border: 2px solid #334155 !important;
+        }
+
+        /* Ajustes y Catálogos Header Button */
+        .light-mode button[onclick="openCatalogModal()"] {
+            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            color: #000000 !important;
+        }
+        .light-mode button[onclick="openCatalogModal()"] i {
+            color: #059669 !important;
+        }
+        .light-mode button[onclick="openCatalogModal()"]:hover {
+            background-color: #e2e8f0 !important;
+        }
+
+        /* Theme Toggle Button in Light Mode */
+        .light-mode button[onclick="toggleTheme()"] {
+            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            color: #000000 !important;
+        }
+
+        /* Brain Network Advice Box (image_77c3cc.png) */
+        .light-mode .absolute.bottom-4.left-4 {
+            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+        }
+        .light-mode .absolute.bottom-4.left-4 p {
+            color: #000000 !important;
+        }
+
+        /* Settings and instructions Modals (image_77c43f.png, image_77c6ec.png) */
+        .light-mode #catalog-modal > div,
+        .light-mode #budget-settings-modal > div {
+            background-color: #ffffff !important;
+            border: 3px solid #000000 !important;
+            color: #000000 !important;
+        }
+        
+        /* Modal Tabs (image_77c730.png) */
+        .light-mode #catalog-modal button[id^="modal-tab-"] {
+            color: #334155 !important;
+            font-weight: 700 !important;
+            border-bottom-width: 3px;
+            border-bottom-color: transparent;
+        }
+        .light-mode #catalog-modal button[id^="modal-tab-"]:hover {
+            color: #000000 !important;
+        }
+        .light-mode #catalog-modal button[id^="modal-tab-"].text-emerald-400 {
+            color: #059669 !important;
+            border-bottom-color: #059669 !important;
+        }
+
+        /* Webhook url inputs in light mode (image_77c43f.png) */
+        .light-mode #sheet-webhook-url {
+            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            color: #000000 !important;
+        }
+        .light-mode #sheet-webhook-url::placeholder {
+            color: #475569 !important;
+        }
+
+        /* "Ver Guía" Button Visibility Correction (image_7833ca.png) */
+        .light-mode button[onclick="toggleEmbeddedGuide()"] {
+            background-color: #0f172a !important; /* Solid dark background */
+            color: #ffffff !important; /* White bold text for maximum contrast */
+            border: 2px solid #000000 !important;
+            font-weight: 800 !important;
+        }
+        .light-mode button[onclick="toggleEmbeddedGuide()"]:hover {
+            background-color: #1e293b !important;
+        }
+
+        /* Manual paso a paso content box (image_77c6ec.png) */
+        .light-mode #embedded-guide {
+            background-color: #f1f5f9 !important;
+            border: 2px solid #334155 !important;
+        }
+        .light-mode #embedded-guide .bg-emerald-500\/10 {
+            background-color: rgba(5, 150, 105, 0.15) !important;
+            border: 2px solid #059669 !important;
+            color: #059669 !important;
+        }
+
+        /* Inputs & forms fields in light mode */
+        .light-mode input,
+        .light-mode select,
+        .light-mode textarea {
+            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            color: #000000 !important;
+        }
+        .light-mode input::placeholder,
+        .light-mode textarea::placeholder {
+            color: #475569 !important;
+        }
+
+        /* Flow dual selector buttons in light mode */
+        .light-mode #btn-flow-gasto.bg-rose-500\/10 {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            color: #ff0000 !important;
+            border: 2px solid #ff0000 !important;
+        }
+        .light-mode #btn-flow-ingreso.bg-cyan-500\/10 {
+            background-color: rgba(6, 182, 212, 0.15) !important;
+            color: #0891b2 !important;
+            border: 2px solid #0891b2 !important;
+        }
+
+        /* Sub-blocks in light mode form */
+        .light-mode .p-3.bg-slate-950,
+        .light-mode .p-4.bg-slate-950\/80 {
+            background-color: #f1f5f9 !important;
+            border: 2px solid #334155 !important;
+        }
+
+        /* Excel-like database table row highlight on hover */
+        .light-mode #table-body tr:hover {
+            background-color: #cbd5e1 !important;
+        }
+        .light-mode thead tr {
+            background-color: #94a3b8 !important;
+            border-bottom: 2px solid #334155 !important;
+        }
+
+        /* Dynamic dropdown menu of user profile (image_1e613f.png) */
+        .light-mode #header-user-popover {
+            background-color: #ffffff !important;
+            border: 2px solid #234d36 !important;
+            color: #132d21 !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+
